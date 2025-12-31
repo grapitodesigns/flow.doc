@@ -1,0 +1,510 @@
+<!DOCTYPE html><html lang="en-gb"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Manual Import of Customers - flow accounting</title><meta name="description" content="Importing Customer Data For the purposes of this example it is assumed you are working on the test company where&hellip;"><meta name="generator" content="Publii Open-Source CMS for Static Site"><link rel="canonical" href="https://grapitodesigns.github.io/flow.doc/manual-import-of-customers.html"><link rel="alternate" type="application/atom+xml" href="https://grapitodesigns.github.io/flow.doc/feed.xml" title="flow accounting - RSS"><link rel="alternate" type="application/json" href="https://grapitodesigns.github.io/flow.doc/feed.json" title="flow accounting - JSON"><meta property="og:title" content="Manual Import of Customers"><meta property="og:image" content="https://grapitodesigns.github.io/flow.doc/media/website/flow-500.png"><meta property="og:image:width" content="499"><meta property="og:image:height" content="242"><meta property="og:site_name" content="flow accounting"><meta property="og:description" content="Importing Customer Data For the purposes of this example it is assumed you are working on the test company where&hellip;"><meta property="og:url" content="https://grapitodesigns.github.io/flow.doc/manual-import-of-customers.html"><meta property="og:type" content="article"><link rel="stylesheet" href="https://grapitodesigns.github.io/flow.doc/assets/css/fontawesome-all.min.css?v=85514f933f9e0b82460af63f1a403fa5"><link rel="stylesheet" href="https://grapitodesigns.github.io/flow.doc/assets/css/style.css?v=08429d9dfdee792d7b4282fb057fc507"><script type="application/ld+json">{"@context":"http://schema.org","@type":"Article","mainEntityOfPage":{"@type":"WebPage","@id":"https://grapitodesigns.github.io/flow.doc/manual-import-of-customers.html"},"headline":"Manual Import of Customers","datePublished":"2025-11-18T13:43+05:30","dateModified":"2025-11-18T13:43+05:30","image":{"@type":"ImageObject","url":"https://grapitodesigns.github.io/flow.doc/media/website/flow-500.png","height":242,"width":499},"description":"Importing Customer Data For the purposes of this example it is assumed you are working on the test company where&hellip;","author":{"@type":"Person","name":"Grapito","url":"https://grapitodesigns.github.io/flow.doc/authors/grapito/"},"publisher":{"@type":"Organization","name":"Grapito","logo":{"@type":"ImageObject","url":"https://grapitodesigns.github.io/flow.doc/media/website/flow-500.png","height":242,"width":499}}}</script><noscript><style>img[loading] {
+                    opacity: 1;
+                }</style></noscript></head><body class="is-preload page-template"><div id="wrapper"><div id="main"><div class="inner"><header id="header"><a class="logo logo-image" href="https://grapitodesigns.github.io/flow.doc/"><img src="https://grapitodesigns.github.io/flow.doc/media/website/flow-500.png" alt="flow accounting" width="499" height="242"></a></header><article class="post"><header class="main post__header"><h1>Manual Import of Customers</h1></header><div class="post__inner post__entry"><h2>Importing Customer Data</h2><p>For the purposes of this example it is assumed you are working on the test company where the company table prefix is <strong>0_</strong>, you can change it to apply to any other company by changeing the sql to refer to the correct company no. Relevant Forum Posts are <a class="urllink" href="https://frontaccounting.com/punbb/viewtopic.php?id=7241" rel="nofollow">7241</a> and <a class="urllink" href="https://frontaccounting.com/punbb/viewtopic.php?id=9205" rel="nofollow">9205</a></p><p class="vspace">This process has been split into 5 steps</p><div class="vspace"> </div><ol><li>Data Security</li><li>Data Preparation</li><li>Complete and Cleanse the Data</li><li>Customer Data Import</li><li>Update 4 DB Tables</li></ol><div class="vspace"> </div><pre> Any support regarding this method of importing customer data can be addressed to the author <a class="wikilink" href="https://frontaccounting.com/fawiki/index.php?n=Users.Apmuthu">apmuthu</a> December 09, 2014, at 11:38 AM
+</pre><div class="vspace"> </div><h3>First Step - Data Security</h3><p>If the data loaded is not exactly as you want it you will need to restore the DB to the current position, change the data and reload.</p><p class="vspace">There are 2 ways to resore the data to the current position, either take a back up or use sql to remove the new records.</p><div class="vspace"> </div><h4>Back Up your DB</h4><p>Use standard FA funtionality to take a back up.</p><div class="vspace"> </div><h4>Use SQL TO Remove New Records</h4><p>If you are using this method you need to find Out The Number of Records Already Stored in the DB by running this SQL before you do anything else</p><div class="vspace"> </div><pre class="escaped">SET @person_id:=(SELECT MAX(id) FROM `0_crm_persons`);
+SET @branch_id:=(SELECT MAX(branch_code) FROM `0_cust_branch`);
+SET @debtor_id:=(SELECT MAX(debtor_no) FROM `0_debtors_master`);
+SET @contact_id:=(SELECT MAX(id) FROM `0_crm_contacts`);
+SELECT @person_id, @branch_id, @debtor_id, @contact_id;
+</pre><p class="vspace">Note down the values of the above MySQL variables, NULL = 0, if you have an empty Db they will all be Null/zero but if you have already entered some customers they may be say:-</p><p class="vspace">@person_id = 4 @branch_id = 7 @debtor_id = 12 @contact_id = 18</p><p class="vspace">If you need to restore and re-import your customers the SQL to remove your imported customer data is at the end of this wiki entry, you will need the numbers noted above.</p><div class="vspace"> </div><h3>Second Step - Data Preparation</h3><p>Prepare an Excel sheet containing your Customer Data with the following columns:</p><div class="vspace"> </div><ol><li>CustomerID (Your Reference from the old accounting system, unique)</li><li>CustName (&lt;= 60 characters)</li><li>BranchName (&lt;= 60 characters)</li><li>Contact</li><li>ShippingAddress</li><li>BillingAddress</li><li>phone1 (&lt;= 30 characters)</li><li>phone2 (&lt;= 30 characters)</li><li>fax (&lt;= 30 characters)</li><li>email (&lt;= 100 characters)</li><li>sales_account (Leave blank if it can be taken from the Items)</li><li>payment_terms</li><li>credit_limit</li><li>TaxNum (&lt;= 55 characters GST / VAT / Tax Exemption Code / Number)</li><li>TaxExempt (0 = Taxed, 1 = Tax Exempt)</li><li>Pricing (1=Retail, 2=Wholesale)</li><li>NeedPO (0 = Direct Invoicing, 1 = Need Purchase Order)</li><li>IsMB (0 = Individual Customer, 1 = Multi-Branch Customer, all Multi-Branch Customers must have the same CustName)</li><li>debtor_no (leave blank, will be completed as part of next step)</li><li>debtor_ref (&lt;= 30 characters, unique nickname for each company which is unique across all companies - no spaces, single and doublequotes, ampersand and other symbols, but hyphens and underscores to be used with discretion and only if very necessary.)</li><li>branch_code (leave blank, to be completed as part of next step)</li><li>branch_ref (&lt;= 30 characters, unique nickname for each multi branch customer, ie., where <strong>IsMB=1</strong>, - no spaces etc, must be unique globally across all branches of all companies.)</li></ol><div class="vspace"> </div><h4>Payment Terms</h4><p>To set the correct payment term for each customer check the values of in the <strong>terms_indicator field</strong> field in the <strong>#_payment_terms</strong> table. Set the value of payment terms to the appropriate value.</p><p class="vspace">You can see the text values at</p><p class="vspace"><strong>FA =&gt; Setup =&gt; Miscellaneous =&gt; Payment Terms</strong></p><p class="vspace">but to get the terms_indicator field you have to check the values held in the db.</p><div class="vspace"> </div><h4>Pricing</h4><p>To set the correct Pricing for each customer check the values of in the <strong>id</strong> field in the <strong>#_sales_types</strong> table. Set the value of payment terms to the appropriate value.</p><p class="vspace">You can see the text values at</p><p class="vspace"><strong>FA =&gt; Sales =&gt; Maintenance =&gt; Sales Types</strong></p><p class="vspace">but to get the id you have to check the values held in the db.</p><p class="vspace">The default sales types available in FA are</p><p class="vspace">1=Retail 2=Wholesale</p><div class="vspace"> </div><h4>Other Customer Data</h4><p>When you try to import your data some fields in your current system may have equivalents in FrontAccounting, these can be imported into the <strong>notes</strong> field in FA.</p><p class="vspace">The <strong>NeedPO</strong> is already configure to do this.</p><p class="vspace">Say you also want to import UPS number, add 1 more columns, UPS#, to the excel spreadsheet and add 1 extra fields to the cust_list table below.</p><div class="vspace"> </div><pre class="escaped">   `UPSCollect` VARCHAR(30) NOT NULL DEFAULT '',
+</pre><p class="vspace">Then amend the sql where it says</p><div class="vspace"> </div><pre class="escaped">  , IF(NeedPO, 'Need PO', ' ') AS notes
+</pre><div class="vspace"> </div><pre> to 
+</pre><div class="vspace"> </div><pre class="escaped">  , TRIM(CONCAT(IF(LENGTH(UPSCollect)&gt;0,CONCAT('UPS#', UPSCollect,' ', ''), IF(NeedPO, 'Need PO', ' ')))) AS notes
+</pre><div class="vspace"> </div><h3>Third Step - Complete and Cleanse the Data</h3><ul><li>All CustName field must be the same for all branches of the same customer</li><li>Then sort the sheet by IsMB and then CustName</li><li>Ensure the values used in the debtor_ref and branch_ref columns do not already exist in the DB.</li><li>Fill in every cell in the <strong>debtor_no</strong> column starting from the top. The initial cell should be set to one more than the <code>@person_id </code>or one more than the <code>@branch_id </code>which ever is higher as noted in the First Step, this number should increment by 1 each time the CustName field changes.</li><li>Fill in the <strong>branch_code</strong> incrementing sequentially starting from one more than the last <strong>debtor_no</strong> generated in the last step. This number should increment by 1 each time the debtor_ref field changes if there is one.<ul><li>Alternatively, if the debtor_ref field has been filled in correctly to be the same for each branch of the same customer, then the debtor_no can be generated after importing into mysql as stated later.</li></ul></li><li>Clean up the data by<ul><li>replacing all double spaces with single spaces in VARCHAR fields</li><li>stripping out single and double quotes, comma, apmersand, period, brackets and other unacceptable symbols from the debtor_ref, branch_ref, phone, phone2, fax, TaxNum fields</li><li>make sure that the email field has vaild email addresses</li><li>Ensure that numeric field are all positive</li><li>Ensure Pricing field restricted to either 1 or 2</li><li>Check TaxExempt, NeedPO and IsMB fields are boolean integer values of either 0 and 1</li></ul></li></ul><div class="vspace"> </div><h3>Fourth Step - Customer Data Import</h3><h4>Stage 1</h4><ul><li>Run this SQL to create an import table called cust_list.</li></ul><div class="vspace"> </div><pre class="escaped">CREATE TABLE `cust_list` (
+  `CustomerID` INT(11) NOT NULL AUTO_INCREMENT,
+  `CustName` VARCHAR(60) NOT NULL DEFAULT '',
+  `BranchName` VARCHAR(60) NOT NULL DEFAULT '',
+  `Contact` VARCHAR(60) NOT NULL DEFAULT '',
+  `ShippingAddress` TINYTEXT NOT NULL,
+  `BillingAddress` TINYTEXT NOT NULL,
+  `phone` VARCHAR(30) NOT NULL DEFAULT '',
+  `phone2` VARCHAR(30) NOT NULL DEFAULT '',
+  `fax` VARCHAR(30) NOT NULL DEFAULT '',
+  `email` VARCHAR(100) NOT NULL DEFAULT '',
+  `sales_account`  VARCHAR(15) NOT NULL DEFAULT '',
+  `payment_terms` INT(11) NOT NULL DEFAULT '1',
+  `credit_limit` FLOAT NOT NULL DEFAULT '0',
+  `TaxNum` VARCHAR(55) NOT NULL DEFAULT '',
+  `TaxExempt`  TINYINT(1) NOT NULL DEFAULT '0',
+  `Pricing` INT(11) NOT NULL DEFAULT '1',
+  `NeedPO` TINYINT(1) NOT NULL DEFAULT '0',
+  `IsMB` TINYINT(1) NOT NULL DEFAULT '0',
+  `debtor_no` INT(11) DEFAULT NULL,
+  `debtor_ref` VARCHAR(30) DEFAULT NULL,
+  `branch_code` INT(11) DEFAULT NULL,
+  `branch_ref` VARCHAR(30) DEFAULT NULL,
+  PRIMARY KEY (`CustomerID`)
+) ENGINE=INNODB;
+</pre><div class="vspace"> </div><h4>Stage 2</h4><ul><li>Now import the data in your csv file into the DB.</li><li><strong>Customer and Branch Code autogeneration</strong>: If the <strong>debtor_no</strong> and / or <strong>branch_code</strong> have not been prepared, do so with the following (assuming that there were 3 customers and 6 branches already entered:</li></ul><pre class="escaped">SET @debtor_no:=3;
+SET @branch_code:=6;
+SET @debtor_ref:='';
+UPDATE cust_list
+    SET debtor_no  = IF(debtor_ref &lt;&gt; @debtor_ref, (@debtor_no:=@debtor_no+1), @debtor_no), 
+        debtor_ref = IF(debtor_ref &lt;&gt; @debtor_ref, @debtor_ref:=debtor_ref, debtor_ref),
+        branch_code=(@branch_code:=@branch_code+1)
+    ORDER BY IsMB, debtor_ref, branch_ref;
+SELECT * FROM cust_list ORDER BY IsMB, debtor_ref, branch_ref;
+</pre><p class="vspace">If you use PHPMyAdmin and the Import option then a couple of tips</p><div class="vspace"> </div><ul><li>Use CSV or CSV using Load Data, remember there is an option to skip rows thus enabling you to have a title row in the csv file.</li><li>Make sure the field separator is set to a comma.</li><li>The Lines terminated with: should be set to \n</li></ul><div class="vspace"> </div><h3>Fifth Step - Update 4 DB Tables</h3><p>The SQL in this section loads the customer using the data in the cust_list table, it populates 4 tables.</p><div class="vspace"> </div><h4>Table 1 - Importing Data to the <strong>#_crm_persons</strong> table</h4><ul><li>Each Individual Customer has one branch (itself)</li><li>Each Multi Branch Customer has one branch (iself as headquarters) and one branch for each of it's branch entities.</li></ul><div class="vspace"> </div><h4>Table 2 - Importing Data to the <strong>#_debtors_master</strong> table</h4><ul><li>Individual Customers must have one debtor record each</li><li>Ihe Headquarters alone of Multi Branch Customers must have one debtor record each</li></ul><div class="vspace"> </div><h4>Table 3 - Importing Data to the <strong>#_cust_branch</strong> table</h4><ul><li>Each Customer (Individual and Multi Branch Headquarters) will have one branch record with debtor_no / debtor_ref / CustName data</li><li>Each branch of the Multi Branch customers will have one branch record with branch_code / branch_ref / BranchName data</li></ul><div class="vspace"> </div><h4>Table 4 - Importing Data to the <strong>#_contacts</strong> table</h4><ul><li>Each Customer (Individual and Multi Branch Headquarters) will have one <strong>customer</strong> and one <strong>cust_branch</strong> contact record for each imported into the <strong>debtors_master</strong> table</li><li>Each Multi Branch Customer's non HQ branch will have one <strong>cust_branch</strong> contact record</li><li>In the FA Web UI, the individual contacts can be edited for their Contact Names or alter the earlier (persons) sql to directly put in the <strong>Contact</strong> into the <strong>contact_name</strong> field in the <strong>#_crm_persons</strong> table</li></ul><div class="vspace"> </div><h4>Run The Following SQL:</h4><p>NOTE: If you get the error message</p><div class="vspace"> </div><ol><li>1062 - Duplicate entry '0' for key 'debtor_ref'</li></ol><p class="vspace">it means the field 'debtor_ref' is in a non-standard position in the table and the sql will need to be adjusted to reflect your field sequence. A sample has been added at the end of this wiki.</p><div class="vspace"> </div><pre class="escaped"># Importing Persons into the '''#_crm_persons''' table
+INSERT INTO `0_crm_persons` 
+SELECT 
+    `debtor_no` AS `id`
+  , `debtor_ref` AS `ref`
+  , IF(LENGTH(`Contact`) &gt; 0, `Contact`, `CustName`) AS `name`
+  , '' AS `name2`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `phone`
+  , `phone2`
+  , `fax`
+  , `email`
+  , '' AS lang
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0  AS inactive
+FROM `cust_list` WHERE NOT IsMB
+
+UNION ALL
+
+(SELECT 
+    `debtor_no` AS `id`
+  , `debtor_ref` AS `ref`
+  , IF(LENGTH(`Contact`) &gt; 0, `Contact`, `CustName`) AS `name`
+  , '' AS `name2`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `phone`
+  , `phone2`
+  , `fax`
+  , `email`
+  , '' AS lang
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0  AS inactive
+FROM `cust_list` WHERE IsMB GROUP BY debtor_no)
+
+UNION ALL
+
+SELECT 
+    `branch_code` AS `id`
+  , `branch_ref` AS `ref`
+  , IF(LENGTH(`Contact`) &gt; 0, `Contact`, `BranchName`) AS `name`
+  , '' AS `name2`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `phone`
+  , `phone2`
+  , `fax`
+  , `email`
+  , '' AS lang
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0  AS inactive
+FROM `cust_list` WHERE IsMB;
+</pre><div class="vspace"> </div><pre class="escaped">#Importing into '''#_debtors_master''' table
+
+SET @currency=(SELECT MID(`value`,1,3) AS currency FROM `0_sys_prefs` WHERE category='setup.company' AND `name`='curr_default');
+INSERT INTO `0_debtors_master`
+(SELECT 
+    `debtor_no`
+  , `CustName` AS `name`
+  , `debtor_ref`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `TaxNum` AS `tax_id`
+  , @currency AS `curr_code`
+  , `Pricing` AS `sales_type`
+  , 0 AS `dimension_id`
+  , 0 AS `dimension2_id`
+  , 1 AS `credit_status`
+  , `payment_terms`
+  , 0 AS `discount`
+  , 0 AS `pymt_discount`
+  , `credit_limit`
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0 AS inactive
+FROM cust_list WHERE NOT IsMB)
+
+UNION ALL
+
+(SELECT 
+    `debtor_no`
+  , `CustName` AS `name`
+  , `debtor_ref`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `TaxNum` AS `tax_id`
+  , @currency AS `curr_code`
+  , `Pricing` AS `sales_type`
+  , 0 AS `dimension_id`
+  , 0 AS `dimension2_id`
+  , 1 AS `credit_status`
+  , `payment_terms`
+  , 0 AS `discount`
+  , 0 AS `pymt_discount`
+  , `credit_limit`
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0 AS inactive
+FROM cust_list WHERE IsMB GROUP BY debtor_no);
+</pre><div class="vspace"> </div><pre class="escaped"># Import the branches into '''#_cust_branch''' table
+
+SET @salesdiscact=(SELECT (`value`+0) AS debtors_act FROM `0_sys_prefs` WHERE category='glsetup.sales' AND `name`='default_sales_discount_act');
+SET @debtorsact=(SELECT (`value`+0) AS debtors_act FROM `0_sys_prefs` WHERE category='glsetup.sales' AND `name`='debtors_act');
+SET @paymentdiscact=(SELECT (`value`+0) AS debtors_act FROM `0_sys_prefs` WHERE category='glsetup.sales' AND `name`='default_prompt_payment_act');
+
+INSERT INTO `0_cust_branch`
+(SELECT 
+    `debtor_no` AS `branch_code`
+  , `debtor_no`
+  , `CustName` AS `br_name`
+  , `debtor_ref` AS `branch_ref`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `br_address`
+  , 1 AS `area`
+  , 1 AS `salesman`
+  , `Contact` AS `contact_name`
+  , 'DEF' AS `default_location`
+  , `TaxExempt`+1 AS `tax_group_id`
+  , `sales_account`
+  , @salesdiscact AS `sales_discount_account`
+  , @debtorsact AS receivables_account
+  , @paymentdiscact AS `payment_discount_account`
+  , 1 AS `default_ship_via`
+  , 0 AS `disable_trans`
+  , REPLACE(IF(LENGTH(ShippingAddress) &gt; 0, ShippingAddress, BillingAddress), "  ", " ") AS `br_post_address`
+  , 0 AS `group_no`
+  , '' AS `notes`
+  , 0 AS `inactive`
+FROM `cust_list` WHERE NOT `IsMB`)
+
+UNION ALL
+
+(SELECT 
+    `debtor_no` AS `branch_code`
+  , `debtor_no`
+  , `CustName` AS `br_name`
+  , `debtor_ref` AS `branch_ref`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `br_address`
+  , 1 AS `area`
+  , 1 AS `salesman`
+  , `Contact` AS `contact_name`
+  , 'DEF' AS `default_location`
+  , `TaxExempt`+1 AS `tax_group_id`
+  , `sales_account`
+  , @salesdiscact AS `sales_discount_account`
+  , @debtorsact AS receivables_account
+  , @paymentdiscact AS `payment_discount_account`
+  , 1 AS `default_ship_via`
+  , 0 AS `disable_trans`
+  , REPLACE(IF(LENGTH(ShippingAddress) &gt; 0, ShippingAddress, BillingAddress), "  ", " ") AS `br_post_address`
+  , 0 AS `group_no`
+  , '' AS `notes`
+  , 0 AS `inactive`
+FROM `cust_list` WHERE `IsMB` GROUP BY `debtor_no`)
+
+UNION ALL
+
+(SELECT 
+    `branch_code`
+  , `debtor_no`
+  , `br_name`
+  , `branch_ref`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `br_address`
+  , 1 AS `area`
+  , 1 AS `salesman`
+  , `Contact` AS `contact_name`
+  , 'DEF' AS `default_location`
+  , `TaxExempt`+1 AS `tax_group_id`
+  , `sales_account`
+  , @salesdiscact AS `sales_discount_account`
+  , @debtorsact AS receivables_account
+  , @paymentdiscact AS `payment_discount_account`
+  , 1 AS `default_ship_via`
+  , 0 AS `disable_trans`
+  , REPLACE(IF(LENGTH(ShippingAddress) &gt; 0, ShippingAddress, BillingAddress), "  ", " ") AS `br_post_address`
+  , 0 AS `group_no`
+  , '' AS `notes`
+  , 0 AS `inactive`
+FROM `cust_list` WHERE `IsMB`);
+</pre><div class="vspace"> </div><pre class="escaped"># Import the persons mappings into '''#_contacts''' table
+
+INSERT INTO `0_crm_contacts`
+SELECT * FROM (
+SELECT 
+    NULL AS id
+  , `debtor_no` AS person_id
+  , 'customer' AS `type`
+  , 'general' AS `action`
+  , `debtor_no` AS `entity_id`
+FROM `cust_list` WHERE `IsMB`
+
+UNION ALL 
+
+SELECT 
+    NULL AS id
+  , `debtor_no` AS person_id
+  , 'cust_branch' AS `type`
+  , 'general' AS `action`
+  , `debtor_no` AS `entity_id`
+FROM `cust_list` WHERE `IsMB`
+
+UNION ALL 
+
+(SELECT 
+    NULL AS id
+  , `debtor_no` AS person_id
+  , 'customer' AS `type`
+  , 'general' AS `action`
+  , `debtor_no` AS `entity_id`
+FROM `cust_list` WHERE NOT `IsMB` GROUP BY debtor_no)
+
+
+UNION ALL
+
+(SELECT 
+    NULL AS id
+  , `debtor_no` AS person_id
+  , 'cust_branch' AS `type`
+  , 'general' AS `action`
+  , `debtor_no` AS `entity_id`
+FROM `cust_list` WHERE NOT `IsMB` GROUP BY debtor_no)
+
+
+UNION ALL
+
+SELECT 
+    NULL AS id
+  , `branch_code` AS person_id
+  , 'cust_branch' AS `type`
+  , 'general' AS `action`
+  , `branch_code` AS `entity_id`
+FROM `cust_list` WHERE NOT `IsMB`
+) a ORDER BY entity_id, person_id, `type` DESC;
+</pre><div class="vspace"> </div><h3>Conclusion</h3><ul><li>If all the above went well, the data has been imported successfully and matches the result you would have got by manually entering the customers one by one using the FrontAccounting GUI, but if nor see below how to remove and re-try.</li></ul><div class="vspace"> </div><h2>How To Remove Your Load Data</h2><p>This will enable you to try several imports.</p><p class="vspace">In the first step you noted 4 values, substitute them in the first 4 lines of the sql below and run them:</p><div class="vspace"> </div><pre class="escaped">SET @person_id:=0;
+SET @branch_id:=0;
+SET @debtor_id:=0;
+SET @contact_id:=0;
+
+DELETE b.* FROM 0_crm_contacts a LEFT JOIN 0_crm_persons b ON (a.person_id = b.id) 
+	WHERE a.`type` IN ('customer', 'cust_branch') AND a.id &gt; @contact_id AND b.id &gt; @person_id;
+ALTER TABLE 0_crm_persons AUTO_INCREMENT=0;
+DELETE FROM 0_cust_branch WHERE branch_code &gt; @branch_id;
+ALTER TABLE 0_cust_branch AUTO_INCREMENT=0;
+DELETE FROM 0_debtors_master WHERE debtor_no &gt; @debtor_id;
+ALTER TABLE 0_debtors_master AUTO_INCREMENT=0;
+DELETE FROM 0_crm_contacts WHERE id &gt; @contact_id AND `type` IN ('customer', 'cust_branch');
+ALTER TABLE 0_crm_contacts AUTO_INCREMENT=0;
+</pre><div class="vspace"> </div><ul><li>Now you can correct the data in your csv file and reload it.</li><li>If the <strong>AUTO_INCREMENT=0</strong> above does not work try <strong>AUTO_INCREMENT=1</strong> or hardcode the actual value.</li></ul><div class="vspace"> </div><h2>Sample SQL Where DB has Non-Standard Field Sequence</h2><pre class="escaped">INSERT INTO `0_crm_persons`
+SELECT
+    `debtor_no` AS `id`
+  , `debtor_ref` AS `ref`
+  , IF(LENGTH(`Contact`) &gt; 0, `Contact`, `CustName`) AS `name`
+  , '' AS `name2`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `phone`
+  , `phone2`
+  , `fax`
+  , `email`
+  , '' AS lang
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0  AS inactive
+FROM `cust_list` WHERE NOT IsMB
+
+UNION ALL
+
+(SELECT
+    `debtor_no` AS `id`
+  , `debtor_ref` AS `ref`
+  , IF(LENGTH(`Contact`) &gt; 0, `Contact`, `CustName`) AS `name`
+  , '' AS `name2`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `phone`
+  , `phone2`
+  , `fax`
+  , `email`
+  , '' AS lang
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0  AS inactive
+FROM `cust_list` WHERE IsMB GROUP BY debtor_no)
+
+UNION ALL
+
+SELECT
+    `branch_code` AS `id`
+  , `branch_ref` AS `ref`
+  , IF(LENGTH(`Contact`) &gt; 0, `Contact`, `BranchName`) AS `name`
+  , '' AS `name2`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `phone`
+  , `phone2`
+  , `fax`
+  , `email`
+  , '' AS lang
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0  AS inactive
+FROM `cust_list` WHERE IsMB;
+
+
+SET @currency=(SELECT MID(`value`,1,3) AS currency FROM `0_sys_prefs` WHERE category='setup.company' AND `name`='curr_default');
+INSERT INTO `0_debtors_master`
+(SELECT
+    `debtor_no`
+  , `CustName` AS `name`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `TaxNum` AS `tax_id`
+  , @currency AS `curr_code`
+  , `Pricing` AS `sales_type`
+  , 0 AS `dimension_id`
+  , 0 AS `dimension2_id`
+  , 1 AS `credit_status`
+  , `payment_terms`
+  , 0 AS `discount`
+  , 0 AS `pymt_discount`
+  , `credit_limit`
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0 AS inactive
+  , `debtor_ref`
+FROM cust_list WHERE NOT IsMB)
+
+UNION ALL
+
+(SELECT
+    `debtor_no`
+  , `CustName` AS `name`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `address`
+  , `TaxNum` AS `tax_id`
+  , @currency AS `curr_code`
+  , `Pricing` AS `sales_type`
+  , 0 AS `dimension_id`
+  , 0 AS `dimension2_id`
+  , 1 AS `credit_status`
+  , `payment_terms`
+  , 0 AS `discount`
+  , 0 AS `pymt_discount`
+  , `credit_limit`
+  , IF(NeedPO, 'Need PO', ' ') AS notes
+  , 0 AS inactive
+  , `debtor_ref`
+FROM cust_list WHERE IsMB GROUP BY debtor_no);
+
+# Import the branches into #_cust_branch table
+
+SET @salesdiscact=(SELECT (`value`+0) AS debtors_act FROM `0_sys_prefs` WHERE category='glsetup.sales' AND `name`='default_sales_discount_act');
+SET @debtorsact=(SELECT (`value`+0) AS debtors_act FROM `0_sys_prefs` WHERE category='glsetup.sales' AND `name`='debtors_act');
+SET @paymentdiscact=(SELECT (`value`+0) AS debtors_act FROM `0_sys_prefs` WHERE category='glsetup.sales' AND `name`='default_prompt_payment_act');
+
+INSERT INTO `0_cust_branch`
+(SELECT
+    `debtor_no` AS `branch_code`
+  , `debtor_no`
+  , `CustName` AS `br_name`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `br_address`
+  , 1 AS `area`
+  , 1 AS `salesman`
+  , `Contact` AS `contact_name`
+  , 'DEF' AS `default_location`
+  , `TaxExempt`+1 AS `tax_group_id`
+  , `sales_account`
+  , @salesdiscact AS `sales_discount_account`
+  , @debtorsact AS receivables_account
+  , @paymentdiscact AS `payment_discount_account`
+  , 1 AS `default_ship_via`
+  , 0 AS `disable_trans`
+  , REPLACE(IF(LENGTH(ShippingAddress) &gt; 0, ShippingAddress, BillingAddress), "  ", " ") AS `br_post_address`
+  , 0 AS `group_no`
+  , '' AS `notes`
+  , 0 AS `inactive`
+  , `debtor_ref` AS `branch_ref`
+FROM `cust_list` WHERE NOT `IsMB`)
+
+UNION ALL
+
+(SELECT
+    `debtor_no` AS `branch_code`
+  , `debtor_no`
+  , `CustName` AS `br_name`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `br_address`
+  , 1 AS `area`
+  , 1 AS `salesman`
+  , `Contact` AS `contact_name`
+  , 'DEF' AS `default_location`
+  , `TaxExempt`+1 AS `tax_group_id`
+  , `sales_account`
+  , @salesdiscact AS `sales_discount_account`
+  , @debtorsact AS receivables_account
+  , @paymentdiscact AS `payment_discount_account`
+  , 1 AS `default_ship_via`
+  , 0 AS `disable_trans`
+  , REPLACE(IF(LENGTH(ShippingAddress) &gt; 0, ShippingAddress, BillingAddress), "  ", " ") AS `br_post_address`
+  , 0 AS `group_no`
+  , '' AS `notes`
+  , 0 AS `inactive`
+  , `debtor_ref` AS `branch_ref`
+FROM `cust_list` WHERE `IsMB` GROUP BY `debtor_no`)
+
+UNION ALL
+
+(SELECT
+    `branch_code`
+  , `debtor_no`
+  , `CustName` AS `br_name`
+  , REPLACE(IF(LENGTH(BillingAddress) &gt; 0, BillingAddress, ShippingAddress), "  ", " ") AS `br_address`
+  , 1 AS `area`
+  , 1 AS `salesman`
+  , `Contact` AS `contact_name`
+  , 'DEF' AS `default_location`
+  , `TaxExempt`+1 AS `tax_group_id`
+  , `sales_account`
+  , @salesdiscact AS `sales_discount_account`
+  , @debtorsact AS receivables_account
+  , @paymentdiscact AS `payment_discount_account`
+  , 1 AS `default_ship_via`
+  , 0 AS `disable_trans`
+  , REPLACE(IF(LENGTH(ShippingAddress) &gt; 0, ShippingAddress, BillingAddress), "  ", " ") AS `br_post_address`
+  , 0 AS `group_no`
+  , '' AS `notes`
+  , 0 AS `inactive`
+  , `branch_ref`
+FROM `cust_list` WHERE `IsMB`);
+
+
+INSERT INTO `0_crm_contacts`
+SELECT * FROM (
+SELECT
+    NULL AS id
+  , `debtor_no` AS person_id
+  , 'customer' AS `type`
+  , 'general' AS `action`
+  , `debtor_no` AS `entity_id`
+FROM `cust_list` WHERE `IsMB`
+
+UNION ALL
+
+SELECT
+    NULL AS id
+  , `debtor_no` AS person_id
+  , 'cust_branch' AS `type`
+  , 'general' AS `action`
+  , `debtor_no` AS `entity_id`
+FROM `cust_list` WHERE `IsMB`
+
+UNION ALL
+
+(SELECT
+    NULL AS id
+  , `debtor_no` AS person_id
+  , 'customer' AS `type`
+  , 'general' AS `action`
+  , `debtor_no` AS `entity_id`
+FROM `cust_list` WHERE NOT `IsMB` GROUP BY debtor_no)
+
+UNION ALL
+
+(SELECT
+    NULL AS id
+  , `debtor_no` AS person_id
+  , 'cust_branch' AS `type`
+  , 'general' AS `action`
+  , `debtor_no` AS `entity_id`
+FROM `cust_list` WHERE NOT `IsMB` GROUP BY debtor_no)
+
+UNION ALL
+
+SELECT
+    NULL AS id
+  , `branch_code` AS person_id
+  , 'cust_branch' AS `type`
+  , 'general' AS `action`
+  , `branch_code` AS `entity_id`
+FROM `cust_list` WHERE NOT `IsMB`
+) a ORDER BY entity_id, person_id, `type` DESC;</pre></div></article></div></div><div id="sidebar"><div class="inner"><div id="search" class="alt"><form action="https://grapitodesigns.github.io/flow.doc/search.html" class="search__form"><input class="search__input" type="search" name="q" placeholder="search..." aria-label="search..." autofocus></form></div><nav id="menu"><header class="major"><h2>Menu</h2></header><ul><li><a href="https://grapitodesigns.github.io/flow.doc/" target="_self">Introduction</a></li><li class="has-submenu"><a href="https://grapitodesigns.github.io/flow.doc/working-with-flow-accounting.html" target="_self" aria-haspopup="true" class="opener">Working with Flow acounting</a><ul class="submenu level-2" aria-hidden="true"><li><a href="https://grapitodesigns.github.io/flow.doc/demo-3.html" target="_self">Sales</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/purchases.html" target="_self">Purchases</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/items-and-inventory.html" target="_self">Items and Inventory</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/manufacturing.html" target="_self">Manufacturing</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/fixed-assets.html" target="_self">Fixed Assets</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/dimensions.html" target="_self">Dimensions</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/banking-and-general-ledger.html" target="_self">Banking And General Ledger</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/setup.html" target="_self">Setup</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/purchases.html" target="_self">Purchases</a></li></ul></li><li class="has-submenu"><a href="https://grapitodesigns.github.io/flow.doc/the-superadmin.html" target="_self" aria-haspopup="true" class="opener">The Super Admin</a><ul class="submenu level-2" aria-hidden="true"><li><a href="https://grapitodesigns.github.io/flow.doc/createupdate-companies-installupdate-languages-installactivate-extensions-software-upgrade.html" target="_self">Create/Update Companies, Install/Update Languages, Install/Activate Extensions, Software Upgrade</a></li></ul></li></ul></nav><section><header class="major"><h2>Get in touch</h2></header><p>Sed varius enim lorem ullamcorper dolore aliquam aenean ornare velit lacus,ac varius enim lorem ullamcorper dolore. Proin sed aliqu facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p><ul class="contact"><li class="icon solid fa-envelope"><a href="#">information@untitled.tld</a></li><li class="icon solid fa-phone">(000) 000-0000</li><li class="icon solid fa-home">1234 Somewhere Road #8254<br>Nashville, TN 00000-0000</li></ul></section><footer id="footer"><p class="copyright">© Editorial 2 - All rights reserved<br>Design by: <a href="https://html5up.net" target="_blank" rel="noopener">HTML5 UP</a>, Powered by Publii</p></footer></div></div></div><script src="https://grapitodesigns.github.io/flow.doc/assets/js/jquery.min.js?v=7c14a783dfeb3d238ccd3edd840d82ee"></script><script src="https://grapitodesigns.github.io/flow.doc/assets/js/browser.min.js?v=c07298dd19048a8a69ad97e754dfe8d0"></script><script src="https://grapitodesigns.github.io/flow.doc/assets/js/breakpoints.min.js?v=81a479eb099e3b187613943b085923b8"></script><script src="https://grapitodesigns.github.io/flow.doc/assets/js/util.min.js?v=cbdaf7c20ac2883c77ae23acfbabd47e"></script><script src="https://grapitodesigns.github.io/flow.doc/assets/js/main.min.js?v=08add7f6d435054ad38ec38d7cf8be40"></script><script>var images=document.querySelectorAll("img[loading]");for(var i=0;i<images.length;i++){if(images[i].complete){images[i].classList.add("is-loaded")}else{images[i].addEventListener("load",function(){this.classList.add("is-loaded")},false)}};</script></body></html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="en-gb"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Install/Update Languages - flow accounting</title><meta name="description" content="Purpose To install language files which represent the language/accounting requirements of different Countries/Locations Issues pertaining to PDF printing of PDF&hellip;"><meta name="generator" content="Publii Open-Source CMS for Static Site"><link rel="canonical" href="https://grapitodesigns.github.io/flow.doc/installupdate-languages.html"><link rel="alternate" type="application/atom+xml" href="https://grapitodesigns.github.io/flow.doc/feed.xml" title="flow accounting - RSS"><link rel="alternate" type="application/json" href="https://grapitodesigns.github.io/flow.doc/feed.json" title="flow accounting - JSON"><meta property="og:title" content="Install/Update Languages"><meta property="og:image" content="https://grapitodesigns.github.io/flow.doc/media/website/flow-500.png"><meta property="og:image:width" content="499"><meta property="og:image:height" content="242"><meta property="og:site_name" content="flow accounting"><meta property="og:description" content="Purpose To install language files which represent the language/accounting requirements of different Countries/Locations Issues pertaining to PDF printing of PDF&hellip;"><meta property="og:url" content="https://grapitodesigns.github.io/flow.doc/installupdate-languages.html"><meta property="og:type" content="article"><link rel="stylesheet" href="https://grapitodesigns.github.io/flow.doc/assets/css/fontawesome-all.min.css?v=85514f933f9e0b82460af63f1a403fa5"><link rel="stylesheet" href="https://grapitodesigns.github.io/flow.doc/assets/css/style.css?v=08429d9dfdee792d7b4282fb057fc507"><script type="application/ld+json">{"@context":"http://schema.org","@type":"Article","mainEntityOfPage":{"@type":"WebPage","@id":"https://grapitodesigns.github.io/flow.doc/installupdate-languages.html"},"headline":"Install/Update Languages","datePublished":"2025-12-01T12:11+05:30","dateModified":"2025-12-01T12:15+05:30","image":{"@type":"ImageObject","url":"https://grapitodesigns.github.io/flow.doc/media/website/flow-500.png","height":242,"width":499},"description":"Purpose To install language files which represent the language/accounting requirements of different Countries/Locations Issues pertaining to PDF printing of PDF&hellip;","author":{"@type":"Person","name":"Grapito","url":"https://grapitodesigns.github.io/flow.doc/authors/grapito/"},"publisher":{"@type":"Organization","name":"Grapito","logo":{"@type":"ImageObject","url":"https://grapitodesigns.github.io/flow.doc/media/website/flow-500.png","height":242,"width":499}}}</script><noscript><style>img[loading] {
+                    opacity: 1;
+                }</style></noscript></head><body class="is-preload page-template"><div id="wrapper"><div id="main"><div class="inner"><header id="header"><a class="logo logo-image" href="https://grapitodesigns.github.io/flow.doc/"><img src="https://grapitodesigns.github.io/flow.doc/media/website/flow-500.png" alt="flow accounting" width="499" height="242"></a></header><article class="post"><header class="main post__header"><h1>Install/Update Languages</h1></header><div class="post__inner post__entry"><h3>Purpose</h3><p>To install language files which represent the language/accounting requirements of different Countries/Locations</p><h3>Procedure</h3><ol><li>Download the appropriate Language file from the Sourceforge Downloads page: http://sourceforge.net/projects/flowaccounting/files/ and extract.</li><li>Log on to your Frontaccounting installation as admin using Training Company. Go to Setup&gt;Install/Update Languages.</li><li>Enter a Language Code (eg Eng_CAN ), Language Name and Encoding. Encoding can usually be found using Firefox by loading the .po file from your language folder into Firefox and going to View&gt;Character Encoding</li><li>Browse for the .po and .mo files in the folder you extracted. Make any other selections as needed.</li><li>Click Save to upload the files to your server</li><li>If the language file you require doesn't exist on the Sourceforge server you can create your own .po and .mo files using Poedit as indicated here: http://flowaccounting.com/wb3/pages/download/download-languages.php Simply use Poedit to alter an existing .po language file where you wish to change it and save to your new language folder. Then update the language as above. In Windows, the program <strong>C:\Program Files\Poedit\bin\msgunfmt.exe</strong> can be used to revert a compiled <strong>.mo</strong> file back into a <strong>.po</strong> file to be edited and then re-compiled using <strong>C:\Program Files\Poedit\bin\msgfmt.exe</strong>. The command <strong>msgunfmt.exe -o en_US.po en_US.mo</strong> in a DOS box does the reversion.</li><li>Locale settings in various OSes</li><li>PHP setlocale()</li><li>Must logout of FA and login again for any language change to take effect.</li></ol><div class="vspace"> </div><h4>PDF Printing Issues for Tamil Unicode</h4><p>Issues pertaining to PDF printing of PDF in Tamil Languages are discussed in the Unofficial GitHub repo.</p><div class="vspace"> </div><h3>Default contents of lang/installed_languages.inc</h3><pre class="escaped">&lt;?php
+
+/* How to make new entries here for non-packaged languages:
+
+-- 'code' should match the name of the directory for the language under \lang
+.-- 'name' is the name that will be displayed in the language selection list (in Users and Display Setup)
+-- 'rtl' only needs to be set for right-to-left languages like Arabic and Hebrew
+-- 'encoding' used in translation file
+-- 'version' always set to '' for manually installed languages.
+-- 'path' installation path related to FA root (e.g. 'lang/en_US').
+*/
+
+
+$installed_languages = array (
+  0 =&gt; 
+  array (
+    'code' =&gt; 'C',
+    'name' =&gt; 'English',
+    'encoding' =&gt; 'iso-8859-1',
+  ),
+);
+
+$dflt_lang = 'C';
+?&gt;
+</pre><div class="vspace"> </div><h3>Tips and Tricks</h3><hr><h4>Arabic in FA</h4><ul><li>In linux, install the Arabic locale:</li></ul><pre class="escaped">locale-gen ar_EG.utf8
+</pre><ul><li>Install <strong>ar_EG</strong> Arabic Language within FA</li><li>Edit the encoding in lang/installed_languages.inc to be 'utf-8' for <strong>ar_EG</strong> language</li><li>Upload the Arabic fonts (<strong>aealarabiya</strong> and <strong>aefurat</strong>) to the <strong>reporting/fonts</strong> folder</li><li>Edit lines 158 in <strong>reporting/includes/class.pdf.inc</strong> to be:</li></ul><pre class="escaped">case "ar_EG" : 	$fontname = "aealarabiya"; 	break;
+</pre><ul><li>When logged in, make your language preference for the UI to be Arabic.</li><li>Now all reports will be in Arabic - Screenshot.</li></ul><div class="vspace"> </div><h4>Chinese language reports</h4><ul><li>Download the fontfile from the website download section.</li><li>Unpack and copy the unpacked files into folder /reporting/fonts</li><li>You may not find the file gbsn00lp.php, but use instead stsongstdlight.php from the tcpdf package</li><li>Change Line 159 in /reporting/includes/class.pdf.inc to</li></ul><pre class="escaped">' case "zh_CN" :     $fontname = "stsongstdlight";     break; '
+</pre><ul><li>Printing Chinese and English is now available</li></ul><div class="vspace"> </div><h4>Entering data in different languages without changing the language of FrontAccounting</h4><p>If you need to accept foreign characters you must either set your language charset to utf-8 or the appropriate iso-8859-X, where the X is a number representing your language. This way the html is stamped with the charset used.</p><div class="vspace"> </div><ol><li>Go to the Setup tab in FrontAccounting as an admin.</li><li>Enter Install/Update Languages and change the encoding for the en_GB (US) language to utf-8 or iso-8859-X where x is the number representing your language. This will create utf-8 html pages.</li><li>Then you must install a unicode font, otherwise creating PDF's will throw an error.</li></ol><div class="indent">* Go here: http://frontaccounting.net/wb3/pages/download/download-fonts.php</div><div class="indent">* Download: Dejavu Font and install.</div><div class="indent">* Unpack and move the files to /reporting/fonts folder.</div><div class="indent">* <del>If you use this font, please change the font name in /reporting/includes/class.pdf.inc file about line 90.</del> <sub>As of 2.2 this was not required, it was present in the file already.</sub></div><div class="indent">* <del>If you use the font FreeSans, please change the font name in /reporting/includes/class.pdf.inc file about line 159.</del> <sub>As of 2.3 this was not required, it was present in the file already.</sub></div><div class="vspace"> </div><h4>Changing language of FA</h4><p><strong>lang/installed_languages.inc</strong> file contains the encoding type - change it to be UTF-8 like:</p><pre class="escaped"># 'encoding' =&gt; 'iso-8859-1',
+    'encoding' =&gt; 'utf-8', 
+</pre><p>The resulting PDF files will be quite heavy.</p><p class="vspace">On a linux machine, <strong>locale -a</strong> would show the languages available. If a certain Spanish encoding like <strong>es_EC</strong> does not appear in the list and we need it, then <strong>sudo locale-gen es_EC</strong> would generate it and possibly prevent oversized PDF files.</p><p class="vspace">If <strong>locale -a</strong> does not show the languages necessary, then run the command <strong>dpkg-reconfigure locales</strong> and choose the locales generated that are needed. Now, <strong>locale -a</strong> would show the languages available. It is assumed that the dependancy <strong>debconf</strong> has been installed. Reference: Debian Locales</p><div class="vspace"> </div><h4>Manual Install of New Language</h4><p>The assumption is that the appropriate language .mo and .po files have been made and are available on a local desktop or as illustrated here, as a zip file and are being installed in a Debian (Physical / Virtual) Machine:</p><div class="vspace"> </div><pre class="escaped">WEBROOT=/var/www/frontac
+LANGNAME=en_IN
+LANGVER=2.3.15-1
+
+cd ${WEBROOT}/modules/_cache
+wget http://www.apmuthu.com/files/${LANGNAME}-${LANGVER}.zip
+unzip ${LANGNAME}-${LANGVER}.zip
+chown -R www-data:www-data ${WEBROOT}/modules/_cache/${LANGNAME}-${LANGVER}
+mkdir -p ${WEBROOT}/lang/${LANGNAME}
+rm -rf ${WEBROOT}/lang/${LANGNAME}/*
+mv ${WEBROOT}/modules/_cache/${LANGNAME}-${LANGVER}/LC_MESSAGES ${WEBROOT}/lang/${LANGNAME}
+</pre><p class="vspace">The contents of the <strong>_init/config</strong> file in the downloaded zip file above are:</p><div class="vspace"> </div><pre class="escaped">Package: en_IN
+Version: 2.3.15-1
+Description: India specific vocabulary fixes
+Author: Ap.Muthu &lt;apmuthu@usa.net&gt;
+Maintenance: Ap.Muthu &lt;apmuthu@usa.net&gt;
+Homepage: n/a
+Language: en_IN
+Encoding: iso-8859-1
+RTLDir: no
+Depends: 
+Type: language
+Name: English (IN)
+InstallPath: lang/en_IN
+Filename: en_IN-2.3.15-1
+</pre><p class="vspace">The contents of the <strong>_init/files</strong> file are:</p><div class="vspace"> </div><pre class="escaped">/LC_MESSAGES/en_IN-2.3.15-1.mo: 713e020993b549dbc838d66e838570d7184eafad
+/LC_MESSAGES/en_IN-2.3.15-1.po: 2a19d338a12bef131967d537298ab0589e407805
+/_init/config: 0930aae512a3b8704c7b2e9f5d06938e98110160
+</pre><p class="vspace">The above file contains the SHA1SUM of the working files in the zip file that was downloaded. It can be generated from an existing installed (or suitably uploaded fileset) setup using:</p><div class="vspace"> </div><pre class="escaped">WEBROOT=/var/www/frontac
+LANGNAME=en_IN
+LANGVER=2.3.15-1
+
+cd ${WEBROOT}/lang/${LANGNAME}
+find ./ -type f -print0 | xargs -0 sha1sum | awk '{ print $2 ": " $1}' | cut -c2- \
+  &gt; ${WEBROOT}/modules/_cache/${LANGNAME}-${LANGVER}/_init/files
+cd ${WEBROOT}/modules/_cache/${LANGNAME}-${LANGVER}
+find ./ -type f -print0 | xargs -0 sha1sum | awk '{ print $2 ": " $1}' | cut -c2- | grep /_init/config: \
+  &gt;&gt; ${WEBROOT}/modules/_cache/${LANGNAME}-${LANGVER}/_init/files
+</pre><p class="vspace">The required file is at and as <strong>/var/www/frontac/modules/_cache/en_IN-2.3.15-1/files</strong> and can be used to make a Language extension zip file for manual install in this manner.</p><p class="vspace">For the FrontAccounting application to be informed of this language extension, the <strong>${WEBROOT}/lang/installed_languages.inc</strong> file needs to have an array entry like:</p><div class="vspace"> </div><pre class="escaped">...
+...
+$installed_languages = array (
+  0 =&gt; 
+  array (
+    'code' =&gt; 'C',
+    'name' =&gt; 'English',
+    'encoding' =&gt; 'iso-8859-1',
+  ),
+  1 =&gt; 
+  array (
+    'code' =&gt; 'en_IN',
+    'name' =&gt; 'English (IN)',
+    'package' =&gt; 'en_IN',
+    'encoding' =&gt; 'iso-8859-1',
+    'version' =&gt; '2.3.15-1',
+    'path' =&gt; 'lang/en_IN',
+  ),
+...
+...
+</pre><p class="vspace">The resultant language strings after setting user language preferences to the new language would be:</p><div class="gallery-wrapper"><div class="gallery" data-is-empty="false" data-translation="Add images" data-columns="1"><figure class="gallery__item"><a href="https://grapitodesigns.github.io/flow.doc/media/posts/113//gallery/Help.Installed_en_IN_lang_strings.png" data-size="985x483"><img loading="lazy" src="https://grapitodesigns.github.io/flow.doc/media/posts/113//gallery/Help.Installed_en_IN_lang_strings-thumbnail.png" alt="" width="720" height="353"></a></figure></div></div><h4>EMail Language</h4><p>The language used in emails is hardcoded in Line 41 of <strong>reporting/includes/class.mail.inc</strong>:</p><pre class="escaped">	var $charset = 'ISO-8859-1';
+</pre><p>Change it to suit your needs if different from the standard English character set above.</p></div></article></div></div><div id="sidebar"><div class="inner"><div id="search" class="alt"><form action="https://grapitodesigns.github.io/flow.doc/search.html" class="search__form"><input class="search__input" type="search" name="q" placeholder="search..." aria-label="search..." autofocus></form></div><nav id="menu"><header class="major"><h2>Menu</h2></header><ul><li><a href="https://grapitodesigns.github.io/flow.doc/" target="_self">Introduction</a></li><li class="has-submenu"><a href="https://grapitodesigns.github.io/flow.doc/working-with-flow-accounting.html" target="_self" aria-haspopup="true" class="opener">Working with Flow acounting</a><ul class="submenu level-2" aria-hidden="true"><li><a href="https://grapitodesigns.github.io/flow.doc/demo-3.html" target="_self">Sales</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/purchases.html" target="_self">Purchases</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/items-and-inventory.html" target="_self">Items and Inventory</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/manufacturing.html" target="_self">Manufacturing</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/fixed-assets.html" target="_self">Fixed Assets</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/dimensions.html" target="_self">Dimensions</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/banking-and-general-ledger.html" target="_self">Banking And General Ledger</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/setup.html" target="_self">Setup</a></li><li><a href="https://grapitodesigns.github.io/flow.doc/purchases.html" target="_self">Purchases</a></li></ul></li><li class="has-submenu"><a href="https://grapitodesigns.github.io/flow.doc/the-superadmin.html" target="_self" aria-haspopup="true" class="opener">The Super Admin</a><ul class="submenu level-2" aria-hidden="true"><li><a href="https://grapitodesigns.github.io/flow.doc/createupdate-companies-installupdate-languages-installactivate-extensions-software-upgrade.html" target="_self">Create/Update Companies, Install/Update Languages, Install/Activate Extensions, Software Upgrade</a></li></ul></li></ul></nav><section><header class="major"><h2>Get in touch</h2></header><p>Sed varius enim lorem ullamcorper dolore aliquam aenean ornare velit lacus,ac varius enim lorem ullamcorper dolore. Proin sed aliqu facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p><ul class="contact"><li class="icon solid fa-envelope"><a href="#">information@untitled.tld</a></li><li class="icon solid fa-phone">(000) 000-0000</li><li class="icon solid fa-home">1234 Somewhere Road #8254<br>Nashville, TN 00000-0000</li></ul></section><footer id="footer"><p class="copyright">© Editorial 2 - All rights reserved<br>Design by: <a href="https://html5up.net" target="_blank" rel="noopener">HTML5 UP</a>, Powered by Publii</p></footer></div></div></div><script src="https://grapitodesigns.github.io/flow.doc/assets/js/jquery.min.js?v=7c14a783dfeb3d238ccd3edd840d82ee"></script><script src="https://grapitodesigns.github.io/flow.doc/assets/js/browser.min.js?v=c07298dd19048a8a69ad97e754dfe8d0"></script><script src="https://grapitodesigns.github.io/flow.doc/assets/js/breakpoints.min.js?v=81a479eb099e3b187613943b085923b8"></script><script src="https://grapitodesigns.github.io/flow.doc/assets/js/util.min.js?v=cbdaf7c20ac2883c77ae23acfbabd47e"></script><script src="https://grapitodesigns.github.io/flow.doc/assets/js/main.min.js?v=08add7f6d435054ad38ec38d7cf8be40"></script><script>var images=document.querySelectorAll("img[loading]");for(var i=0;i<images.length;i++){if(images[i].complete){images[i].classList.add("is-loaded")}else{images[i].addEventListener("load",function(){this.classList.add("is-loaded")},false)}};</script></body></html>
